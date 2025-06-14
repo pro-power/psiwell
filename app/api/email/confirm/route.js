@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 export async function POST(request) {
   try {
     // 1. Parse the incoming data
-    const { date, time, client, email, phone } = await request.json();
+    const { date, time, client, email, phone, isReturningClient, consultationType } = await request.json();
 
     // Format date and time for calendars
     const formattedDate = new Date(date);
@@ -71,20 +71,62 @@ END:VCALENDAR`;
       from: process.env.EMAIL_USER,
       to: email,
       subject: "Booking Confirmation",
-      text: `Hello ${client},
+      text: isReturningClient ? 
+        `Hello ${client},
 
 Your booking has been confirmed on ${date} at ${time}.
+Consultation Type: ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
+${consultationType === "in-person" ? `
+Location and Parking Information:
+Our office is located at: 100 S. Ashley Drive, Suite 600, Tampa, Florida 33602
+Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.
+
+Directions: https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602` : ""}
 We look forward to meeting you soon!
 
 Add this appointment to your calendar:
 Google Calendar: ${googleCalendarUrl}
 Apple Calendar: ${appleCalendarUrl}
 
+Cancellation Policy:
+Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text: tel:2174172073
+
+Regards,
+Jason Versace` :
+        `Hello ${client},
+
+Your booking has been confirmed on ${date} at ${time}.
+Consultation Type: ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
+${consultationType === "in-person" ? `
+Location and Parking Information:
+Our office is located at: 100 S. Ashley Drive, Suite 600, Tampa, Florida 33602
+Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.
+
+Directions: https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602` : ""}
+We look forward to meeting you soon!
+
+As a new client, please review and complete the informed consent form attached to this email.
+
+Add this appointment to your calendar:
+Google Calendar: ${googleCalendarUrl}
+Apple Calendar: ${appleCalendarUrl}
+
+Cancellation Policy:
+Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text: tel:2174172073
+
 Regards,
 Jason Versace`,
-      html: `
+      html: isReturningClient ?
+        `
         <p>Hello ${client},</p>
         <p>Your booking has been confirmed on <strong>${date}</strong> at <strong>${time}</strong>.</p>
+        <p><strong>Consultation Type:</strong> ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}</p>
+        ${consultationType === "in-person" ? `
+        <div style="margin: 20px 0; padding: 15px; background-color: #f0f9ff; border-radius: 5px; border-left: 4px solid #3b82f6;">
+          <p><strong>Location and Parking Information:</strong></p>
+          <p>Our office is located at: <a href="https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602" style="color: #2563eb; text-decoration: underline;">100 S. Ashley Drive, Suite 600, Tampa, Florida 33602</a></p>
+          <p>Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.</p>
+        </div>` : ""}
         <p>We look forward to meeting you soon!</p>
         <div style="margin-top: 20px;">
           <p><strong>Add to your calendar:</strong></p>
@@ -97,8 +139,51 @@ Jason Versace`,
             </a>
           </div>
         </div>
+
+        <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+          <p><strong>Cancellation Policy:</strong></p>
+          <p>Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text <a href="tel:2174172073" style="color: #2563eb; text-decoration: underline;">(217) 417-2073</a>.</p>
+        </div>
+
+        <p>Regards,<br>Jason Versace</p>
+      ` :
+        `
+        <p>Hello ${client},</p>
+        <p>Your booking has been confirmed on <strong>${date}</strong> at <strong>${time}</strong>.</p>
+        <p><strong>Consultation Type:</strong> ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}</p>
+        ${consultationType === "in-person" ? `
+        <div style="margin: 20px 0; padding: 15px; background-color: #f0f9ff; border-radius: 5px; border-left: 4px solid #3b82f6;">
+          <p><strong>Location and Parking Information:</strong></p>
+          <p>Our office is located at: <a href="https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602" style="color: #2563eb; text-decoration: underline;">100 S. Ashley Drive, Suite 600, Tampa, Florida 33602</a></p>
+          <p>Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.</p>
+        </div>` : ""}
+        <p>We look forward to meeting you soon!</p>
+        <p>As a new client, please review and complete the informed consent form attached to this email.</p>
+        <div style="margin-top: 20px;">
+          <p><strong>Add to your calendar:</strong></p>
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+              Add to Google Calendar
+            </a>
+            <a href="${appleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #000000; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+              Add to Apple Calendar
+            </a>
+          </div>
+        </div>
+
+        <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+          <p><strong>Cancellation Policy:</strong></p>
+          <p>Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text <a href="tel:2174172073" style="color: #2563eb; text-decoration: underline;">(217) 417-2073</a>.</p>
+        </div>
+
         <p>Regards,<br>Jason Versace</p>
       `,
+      attachments: isReturningClient ? [] : [
+        {
+          filename: 'informed-consent-form.pdf',
+          path: './public/documents/informed-consent-form.pdf'
+        }
+      ]
     });
 
     // 4. Send notification email to therapist

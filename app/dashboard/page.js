@@ -170,6 +170,12 @@ export default function Dashboard() {
                   Phone
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                  Client Type
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                  Consultation
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
                   Actions
                 </th>
               </tr>
@@ -191,6 +197,24 @@ export default function Dashboard() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     {event.phone}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      event.isReturningClient 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {event.isReturningClient ? 'Returning' : 'New'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      event.consultationType === 'in-person'
+                        ? 'bg-purple-100 text-purple-800'
+                        : 'bg-orange-100 text-orange-800'
+                    }`}>
+                      {event.consultationType === 'in-person' ? 'In-person' : 'Telehealth'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     <button

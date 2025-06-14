@@ -10,9 +10,9 @@ export async function POST(req) {
     const requestBody = await req.json();
     console.log("Received Data:", requestBody); // Debugging log
 
-    const { date, time, client, email, phone } = requestBody;
+    const { date, time, client, email, phone, isReturningClient, consultationType } = requestBody;
 
-    if (!date || !time || !client || !email || !phone) {
+    if (!date || !time || !client || !email || !phone || isReturningClient === null || !consultationType) {
       console.error("Validation Error: Missing fields");
       return NextResponse.json(
         { error: "All fields are required." },
@@ -26,6 +26,8 @@ export async function POST(req) {
       client,
       email,
       phone,
+      isReturningClient,
+      consultationType,
     });
 
     await newEvent.save();

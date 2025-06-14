@@ -9,6 +9,8 @@ export default function CalendarBooking({ id }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [isReturningClient, setIsReturningClient] = useState(null);
+  const [consultationType, setConsultationType] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [bookedTimeSlots, setBookedTimeSlots] = useState([]);
@@ -102,7 +104,7 @@ export default function CalendarBooking({ id }) {
   };
 
   const handleConfirm = async () => {
-    if (!selectedDay || !selectedTime || !name || !email || !phone) {
+    if (!selectedDay || !selectedTime || !name || !email || !phone || isReturningClient === null || consultationType === null) {
       setMessage("All fields are required.");
       return;
     }
@@ -126,6 +128,8 @@ export default function CalendarBooking({ id }) {
           client: name,
           email,
           phone,
+          isReturningClient,
+          consultationType,
         }),
       });
       const response = await fetch("/api/event", {
@@ -137,6 +141,8 @@ export default function CalendarBooking({ id }) {
           client: name,
           email,
           phone,
+          isReturningClient,
+          consultationType,
         }),
       });
 
@@ -202,6 +208,62 @@ export default function CalendarBooking({ id }) {
           </p>
 
           <div className="mt-6 space-y-4">
+            <div className="mb-4">
+              <p className="text-gray-700 mb-2">Are you a returning client? *</p>
+              <div className="flex gap-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="clientStatus"
+                    value="returning"
+                    checked={isReturningClient === true}
+                    onChange={() => setIsReturningClient(true)}
+                    className="mr-2"
+                  />
+                  Yes
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="clientStatus"
+                    value="new"
+                    checked={isReturningClient === false}
+                    onChange={() => setIsReturningClient(false)}
+                    className="mr-2"
+                  />
+                  No
+                </label>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-gray-700 mb-2">Please select your preference: telehealth consultation or in-person visit. *</p>
+              <div className="flex gap-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="consultationType"
+                    value="in-person"
+                    checked={consultationType === "in-person"}
+                    onChange={() => setConsultationType("in-person")}
+                    className="mr-2"
+                  />
+                  In-person visit
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="consultationType"
+                    value="telehealth"
+                    checked={consultationType === "telehealth"}
+                    onChange={() => setConsultationType("telehealth")}
+                    className="mr-2"
+                  />
+                  Telehealth
+                </label>
+              </div>
+            </div>
+
             <input
               type="text"
               placeholder="Your Name"
