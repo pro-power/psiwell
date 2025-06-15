@@ -36,7 +36,7 @@ export default function InsuranceInfo({ id }) {
     <div id={id} className="py-16 bg-white">
       <div className="w-[80%] md:w-[70%] mx-auto">
         <h2 className="text-3xl font-bold text-slate-800 mb-6 text-center">
-          Insurance & Assessments
+          Insurance &amp; Assessments
         </h2>
         <p className="text-gray-600 text-center mb-12">
           I work with various insurance providers and use standardized
@@ -90,7 +90,7 @@ export default function InsuranceInfo({ id }) {
           <p className="text-gray-600">
             If you have questions about whether your insurance will cover our
             sessions or if you need assistance navigating the insurance process,
-            please don't hesitate to contact me.
+            please don&apos;t hesitate to contact me.
           </p>
         </div>
       </div>
