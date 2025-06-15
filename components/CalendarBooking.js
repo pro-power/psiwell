@@ -196,40 +196,40 @@ export default function CalendarBooking({ id }) {
     <div id={id} className="min-h-screen py-20 ">
       <div className="flex flex-col md:flex-row max-w-5xl mx-4 lg:mx-auto my-32 border bg-white border-slate-200 rounded-md shadow-sm overflow-hidden">
         {/* LEFT PANEL: Meeting Info & User Input */}
-        <div className="w-full md:w-1/3 p-6 bg-white">
-          <h1 className="text-2xl font-semibold text-gray-900">
+        <div className="w-full md:w-1/2 p-10 bg-white shadow-lg rounded-xl">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
             Meet Jason Versace
           </h1>
 
-          <p className="text-gray-600 mt-3">
+          <p className="text-lg text-gray-600 mt-3 mb-6">
             Schedule a meeting with Jason Versace to discuss your project, get
             advice, or just have a chat. Please fill in your details below to
             confirm your booking.
           </p>
 
-          <div className="mt-6 space-y-4">
+          <div className="mt-6 space-y-6">
             <div className="mb-4">
-              <p className="text-gray-700 mb-2">Are you a returning client? *</p>
-              <div className="flex gap-4">
-                <label className="flex items-center">
+              <p className="text-lg text-gray-700 mb-2">Are you a returning client? *</p>
+              <div className="flex gap-6">
+                <label className="flex items-center text-lg">
                   <input
                     type="radio"
                     name="clientStatus"
                     value="returning"
                     checked={isReturningClient === true}
                     onChange={() => setIsReturningClient(true)}
-                    className="mr-2"
+                    className="mr-2 scale-125"
                   />
                   Yes
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center text-lg">
                   <input
                     type="radio"
                     name="clientStatus"
                     value="new"
                     checked={isReturningClient === false}
                     onChange={() => setIsReturningClient(false)}
-                    className="mr-2"
+                    className="mr-2 scale-125"
                   />
                   No
                 </label>
@@ -237,27 +237,27 @@ export default function CalendarBooking({ id }) {
             </div>
 
             <div className="mb-4">
-              <p className="text-gray-700 mb-2">Please select your preference: telehealth consultation or in-person visit. *</p>
-              <div className="flex gap-4">
-                <label className="flex items-center">
+              <p className="text-lg text-gray-700 mb-2">Please select your preference: telehealth consultation or in-person visit. *</p>
+              <div className="flex gap-6">
+                <label className="flex items-center text-lg">
                   <input
                     type="radio"
                     name="consultationType"
                     value="in-person"
                     checked={consultationType === "in-person"}
                     onChange={() => setConsultationType("in-person")}
-                    className="mr-2"
+                    className="mr-2 scale-125"
                   />
                   In-person visit
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center text-lg">
                   <input
                     type="radio"
                     name="consultationType"
                     value="telehealth"
                     checked={consultationType === "telehealth"}
                     onChange={() => setConsultationType("telehealth")}
-                    className="mr-2"
+                    className="mr-2 scale-125"
                   />
                   Telehealth
                 </label>
@@ -269,31 +269,31 @@ export default function CalendarBooking({ id }) {
               placeholder="Your Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400"
+              className="w-full p-4 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
             <input
               type="email"
               placeholder="Your Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400"
+              className="w-full p-4 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
             <input
               type="tel"
               placeholder="Your Phone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400"
+              className="w-full p-4 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
             <button
-              className="mt-4 w-full bg-slate-400 text-white p-2 rounded-md hover:bg-slate-500 transition hover:cursor-[url('/psi.png'),_pointer]"
+              className="mt-4 w-full bg-slate-500 text-white p-4 text-xl rounded-md hover:bg-slate-600 transition hover:cursor-[url('/psi.png'),_pointer] font-semibold"
               onClick={handleConfirm}
               disabled={loading}
             >
               {loading ? "Booking..." : "Confirm Booking"}
             </button>
             {message && (
-              <p className={`text-sm ${message.includes("success") ? "text-green-600" : "text-red-600"}`}>
+              <p className={`text-lg ${message.includes("success") ? "text-green-600" : "text-red-600"}`}>
                 {message}
               </p>
             )}
@@ -301,7 +301,7 @@ export default function CalendarBooking({ id }) {
         </div>
 
         {/* MIDDLE PANEL: Calendar */}
-        <div className="w-full md:w-1/3 p-6 border-x border-slate-200">
+        <div className="w-full md:w-1/2 p-6 border-x border-slate-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-800">
               {new Date(currentYear, currentMonth).toLocaleString("default", {

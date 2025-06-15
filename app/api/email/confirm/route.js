@@ -8,13 +8,11 @@ export async function POST(request) {
     const { date, time, client, email, phone, isReturningClient, consultationType } = await request.json();
 
     // Format date and time for calendars
-    const formattedDate = new Date(date);
-    const [hours, minutes] = time.split(":");
+    const [year, month, day] = date.split('-').map(Number);
+    const [hours, minutes] = time.split(":").map(Number);
 
     // Set start and end times (assuming 1 hour appointment)
-    const startTime = new Date(formattedDate);
-    startTime.setHours(parseInt(hours), parseInt(minutes), 0);
-
+    const startTime = new Date(year, month - 1, day, hours, minutes, 0);
     const endTime = new Date(startTime);
     endTime.setHours(startTime.getHours() + 1);
 
@@ -33,8 +31,8 @@ export async function POST(request) {
       action: "TEMPLATE",
       text: `Appointment with ${client}`,
       dates: `${startTimeISO}/${endTimeISO}`,
-      details: `Appointment with ${client}\nClient Email: ${email}\nClient Phone: ${phone}`,
-      location: "Office Location",
+      details: `Appointment with ${client}\nClient Email: ${email}\nClient Phone: ${phone}\nConsultation Type: ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}`,
+      location: consultationType === "in-person" ? "100 S. Ashley Drive, Suite 600, Tampa, Florida 33602" : "Telehealth",
     };
 
     const googleCalendarUrl = `https://calendar.google.com/calendar/render?${Object.entries(
@@ -43,19 +41,28 @@ export async function POST(request) {
       .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
       .join("&")}`;
 
-    // Create Apple Calendar link
-    const appleCalendarUrl = `data:text/calendar;charset=utf-8,BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Your Company//Your Product//EN
-BEGIN:VEVENT
-DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0]}Z
-DTSTART:${startTime.toISOString().replace(/[-:]/g, "").split(".")[0]}Z
-DTEND:${endTime.toISOString().replace(/[-:]/g, "").split(".")[0]}Z
-SUMMARY:Appointment with ${client}
-DESCRIPTION:Appointment with ${client}\\nClient Email: ${email}\\nClient Phone: ${phone}
-LOCATION:Office Location
-END:VEVENT
-END:VCALENDAR`;
+    // Format time in EST
+    const formatTimeEST = (date) => {
+      return date.toLocaleTimeString('en-US', {
+        timeZone: 'America/New_York',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    };
+
+    const formatDateEST = (date) => {
+      return date.toLocaleDateString('en-US', {
+        timeZone: 'America/New_York',
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    const appointmentTimeEST = formatTimeEST(startTime);
+    const appointmentDateEST = formatDateEST(startTime);
 
     // 2. Create a Nodemailer transporter using your Gmail credentials
     const transporter = nodemailer.createTransport({
@@ -70,11 +77,11 @@ END:VCALENDAR`;
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Booking Confirmation",
+      subject: `Appointment Confirmation: ${appointmentDateEST} at ${appointmentTimeEST} EST`,
       text: isReturningClient ? 
         `Hello ${client},
 
-Your booking has been confirmed on ${date} at ${time}.
+Your appointment has been confirmed for ${appointmentDateEST} at ${appointmentTimeEST} EST.
 Consultation Type: ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
 ${consultationType === "in-person" ? `
 Location and Parking Information:
@@ -86,7 +93,6 @@ We look forward to meeting you soon!
 
 Add this appointment to your calendar:
 Google Calendar: ${googleCalendarUrl}
-Apple Calendar: ${appleCalendarUrl}
 
 Cancellation Policy:
 Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text: tel:2174172073
@@ -95,7 +101,7 @@ Regards,
 Jason Versace` :
         `Hello ${client},
 
-Your booking has been confirmed on ${date} at ${time}.
+Your appointment has been confirmed for ${appointmentDateEST} at ${appointmentTimeEST} EST.
 Consultation Type: ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
 ${consultationType === "in-person" ? `
 Location and Parking Information:
@@ -109,7 +115,6 @@ As a new client, please review and complete the informed consent form attached t
 
 Add this appointment to your calendar:
 Google Calendar: ${googleCalendarUrl}
-Apple Calendar: ${appleCalendarUrl}
 
 Cancellation Policy:
 Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text: tel:2174172073
@@ -118,65 +123,77 @@ Regards,
 Jason Versace`,
       html: isReturningClient ?
         `
-        <p>Hello ${client},</p>
-        <p>Your booking has been confirmed on <strong>${date}</strong> at <strong>${time}</strong>.</p>
-        <p><strong>Consultation Type:</strong> ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}</p>
-        ${consultationType === "in-person" ? `
-        <div style="margin: 20px 0; padding: 15px; background-color: #f0f9ff; border-radius: 5px; border-left: 4px solid #3b82f6;">
-          <p><strong>Location and Parking Information:</strong></p>
-          <p>Our office is located at: <a href="https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602" style="color: #2563eb; text-decoration: underline;">100 S. Ashley Drive, Suite 600, Tampa, Florida 33602</a></p>
-          <p>Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.</p>
-        </div>` : ""}
-        <p>We look forward to meeting you soon!</p>
-        <div style="margin-top: 20px;">
-          <p><strong>Add to your calendar:</strong></p>
-          <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+          <p>Hello ${client},</p>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="color: #2563eb; margin-top: 0;">Appointment Confirmation</h2>
+            <p style="font-size: 18px; margin-bottom: 10px;">
+              <strong>Date:</strong> ${appointmentDateEST}<br>
+              <strong>Time:</strong> ${appointmentTimeEST} EST<br>
+              <strong>Consultation Type:</strong> ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
+            </p>
+          </div>
+
+          ${consultationType === "in-person" ? `
+          <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+            <h3 style="color: #1e40af; margin-top: 0;">Location and Parking Information</h3>
+            <p>Our office is located at: <a href="https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602" style="color: #2563eb; text-decoration: underline;">100 S. Ashley Drive, Suite 600, Tampa, Florida 33602</a></p>
+            <p>Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.</p>
+          </div>` : ""}
+
+          <p>We look forward to meeting you soon!</p>
+
+          <div style="margin: 20px 0;">
+            <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
               Add to Google Calendar
             </a>
-            <a href="${appleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #000000; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-              Add to Apple Calendar
-            </a>
           </div>
-        </div>
 
-        <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
-          <p><strong>Cancellation Policy:</strong></p>
-          <p>Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text <a href="tel:2174172073" style="color: #2563eb; text-decoration: underline;">(217) 417-2073</a>.</p>
-        </div>
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #1e40af; margin-top: 0;">Cancellation Policy</h3>
+            <p>Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text <a href="tel:2174172073" style="color: #2563eb; text-decoration: underline;">(217) 417-2073</a>.</p>
+          </div>
 
-        <p>Regards,<br>Jason Versace</p>
+          <p>Regards,<br>Jason Versace</p>
+        </div>
       ` :
         `
-        <p>Hello ${client},</p>
-        <p>Your booking has been confirmed on <strong>${date}</strong> at <strong>${time}</strong>.</p>
-        <p><strong>Consultation Type:</strong> ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}</p>
-        ${consultationType === "in-person" ? `
-        <div style="margin: 20px 0; padding: 15px; background-color: #f0f9ff; border-radius: 5px; border-left: 4px solid #3b82f6;">
-          <p><strong>Location and Parking Information:</strong></p>
-          <p>Our office is located at: <a href="https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602" style="color: #2563eb; text-decoration: underline;">100 S. Ashley Drive, Suite 600, Tampa, Florida 33602</a></p>
-          <p>Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.</p>
-        </div>` : ""}
-        <p>We look forward to meeting you soon!</p>
-        <p>As a new client, please review and complete the informed consent form attached to this email.</p>
-        <div style="margin-top: 20px;">
-          <p><strong>Add to your calendar:</strong></p>
-          <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+          <p>Hello ${client},</p>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="color: #2563eb; margin-top: 0;">Appointment Confirmation</h2>
+            <p style="font-size: 18px; margin-bottom: 10px;">
+              <strong>Date:</strong> ${appointmentDateEST}<br>
+              <strong>Time:</strong> ${appointmentTimeEST} EST<br>
+              <strong>Consultation Type:</strong> ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
+            </p>
+          </div>
+
+          ${consultationType === "in-person" ? `
+          <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+            <h3 style="color: #1e40af; margin-top: 0;">Location and Parking Information</h3>
+            <p>Our office is located at: <a href="https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602" style="color: #2563eb; text-decoration: underline;">100 S. Ashley Drive, Suite 600, Tampa, Florida 33602</a></p>
+            <p>Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.</p>
+          </div>` : ""}
+
+          <p>We look forward to meeting you soon!</p>
+          <p>As a new client, please review and complete the informed consent form attached to this email.</p>
+
+          <div style="margin: 20px 0;">
+            <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
               Add to Google Calendar
             </a>
-            <a href="${appleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #000000; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-              Add to Apple Calendar
-            </a>
           </div>
-        </div>
 
-        <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
-          <p><strong>Cancellation Policy:</strong></p>
-          <p>Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text <a href="tel:2174172073" style="color: #2563eb; text-decoration: underline;">(217) 417-2073</a>.</p>
-        </div>
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #1e40af; margin-top: 0;">Cancellation Policy</h3>
+            <p>Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text <a href="tel:2174172073" style="color: #2563eb; text-decoration: underline;">(217) 417-2073</a>.</p>
+          </div>
 
-        <p>Regards,<br>Jason Versace</p>
+          <p>Regards,<br>Jason Versace</p>
+        </div>
       `,
       attachments: isReturningClient ? [] : [
         {
@@ -190,35 +207,36 @@ Jason Versace`,
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: process.env.THERAPIST_EMAIL,
-      subject: "New Appointment Booking",
+      subject: `New Appointment: ${client} on ${appointmentDateEST} at ${appointmentTimeEST} EST`,
       text: `New appointment booked:
 
 Client: ${client}
-Date: ${date}
-Time: ${time}
+Date: ${appointmentDateEST}
+Time: ${appointmentTimeEST} EST
 Email: ${email}
 Phone: ${phone}
+Consultation Type: ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
 
 Add this appointment to your calendar:
-Google Calendar: ${googleCalendarUrl}
-Apple Calendar: ${appleCalendarUrl}`,
+Google Calendar: ${googleCalendarUrl}`,
       html: `
-        <p><strong>New appointment booked:</strong></p>
-        <p>
-          <strong>Client:</strong> ${client}<br>
-          <strong>Date:</strong> ${date}<br>
-          <strong>Time:</strong> ${time}<br>
-          <strong>Email:</strong> ${email}<br>
-          <strong>Phone:</strong> ${phone}
-        </p>
-        <div style="margin-top: 20px;">
-          <p><strong>Add to your calendar:</strong></p>
-          <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+          <h2 style="color: #2563eb;">New Appointment Booked</h2>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 5px 0;">
+              <strong>Client:</strong> ${client}<br>
+              <strong>Date:</strong> ${appointmentDateEST}<br>
+              <strong>Time:</strong> ${appointmentTimeEST} EST<br>
+              <strong>Email:</strong> ${email}<br>
+              <strong>Phone:</strong> ${phone}<br>
+              <strong>Consultation Type:</strong> ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
+            </p>
+          </div>
+
+          <div style="margin: 20px 0;">
+            <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
               Add to Google Calendar
-            </a>
-            <a href="${appleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #000000; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-              Add to Apple Calendar
             </a>
           </div>
         </div>

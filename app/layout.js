@@ -1,7 +1,6 @@
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import Navbar from "../components/Navbar";
-import CustomCursor from "../components/CustomCursor";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -28,7 +27,6 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body suppressHydrationWarning={true} className={poppins.className}>
-        <CustomCursor />
         <Navbar />
         {children}
       </body>
