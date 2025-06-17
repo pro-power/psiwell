@@ -57,7 +57,7 @@ export default function Dashboard() {
   const handleLogin = (e) => {
     e.preventDefault();
     // Replace 'your-password-here' with your desired password
-    if (password === "123456") {
+    if (password === "SandyMann2211") {
       setIsAuthenticated(true);
       setError("");
     } else {
@@ -80,7 +80,7 @@ export default function Dashboard() {
 
       if (response.ok) {
         // Remove the canceled event from the list
-        setEvents(events.filter(event => event._id !== eventId));
+        setEvents(events.filter((event) => event._id !== eventId));
         setError("");
       } else {
         const data = await response.json();
@@ -149,10 +149,10 @@ export default function Dashboard() {
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
         Upcoming Events
       </h2>
-      <div className="border border-slate-200 rounded-md shadow-sm overflow-hidden mb-8">
+      <div className="border border-gray-200 rounded-2xl overflow-hidden mb-8">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
                   Date
@@ -199,21 +199,27 @@ export default function Dashboard() {
                     {event.phone}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      event.isReturningClient 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {event.isReturningClient ? 'Returning' : 'New'}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        event.isReturningClient
+                          ? "bg-green-100 text-green-800"
+                          : "bg-blue-100 text-blue-800"
+                      }`}
+                    >
+                      {event.isReturningClient ? "Returning" : "New"}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      event.consultationType === 'in-person'
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-orange-100 text-orange-800'
-                    }`}>
-                      {event.consultationType === 'in-person' ? 'In-person' : 'Telehealth'}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        event.consultationType === "in-person"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-orange-100 text-orange-800"
+                      }`}
+                    >
+                      {event.consultationType === "in-person"
+                        ? "In-person"
+                        : "Telehealth"}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
@@ -237,10 +243,10 @@ export default function Dashboard() {
       </div>
 
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Past Events</h2>
-      <div className="border border-slate-200 rounded-md shadow-sm overflow-hidden">
+      <div className="border border-gray-200 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
                   Date

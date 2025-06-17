@@ -5,10 +5,18 @@ import nodemailer from "nodemailer";
 export async function POST(request) {
   try {
     // 1. Parse the incoming data
-    const { date, time, client, email, phone, isReturningClient, consultationType } = await request.json();
+    const {
+      date,
+      time,
+      client,
+      email,
+      phone,
+      isReturningClient,
+      consultationType,
+    } = await request.json();
 
     // Format date and time for calendars
-    const [year, month, day] = date.split('-').map(Number);
+    const [year, month, day] = date.split("-").map(Number);
     const [hours, minutes] = time.split(":").map(Number);
 
     // Set start and end times (assuming 1 hour appointment)
@@ -31,8 +39,15 @@ export async function POST(request) {
       action: "TEMPLATE",
       text: `Appointment with ${client}`,
       dates: `${startTimeISO}/${endTimeISO}`,
-      details: `Appointment with ${client}\nClient Email: ${email}\nClient Phone: ${phone}\nConsultation Type: ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}`,
-      location: consultationType === "in-person" ? "100 S. Ashley Drive, Suite 600, Tampa, Florida 33602" : "Telehealth",
+      details: `Appointment with ${client}\nClient Email: ${email}\nClient Phone: ${phone}\nConsultation Type: ${
+        consultationType === "in-person"
+          ? "In-person visit"
+          : "Telehealth consultation"
+      }`,
+      location:
+        consultationType === "in-person"
+          ? "100 S. Ashley Drive, Suite 600, Tampa, Florida 33602"
+          : "Telehealth",
     };
 
     const googleCalendarUrl = `https://calendar.google.com/calendar/render?${Object.entries(
@@ -43,30 +58,32 @@ export async function POST(request) {
 
     // Format time in EST
     const formatTimeEST = (date) => {
-      return date.toLocaleTimeString('en-US', {
-        timeZone: 'America/New_York',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
+      return date.toLocaleTimeString("en-US", {
+        timeZone: "America/New_York",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
       });
     };
 
     const formatDateEST = (date) => {
-      return date.toLocaleDateString('en-US', {
-        timeZone: 'America/New_York',
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      return date.toLocaleDateString("en-US", {
+        timeZone: "America/New_York",
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     };
 
     const appointmentTimeEST = formatTimeEST(startTime);
     const appointmentDateEST = formatDateEST(startTime);
 
-    // 2. Create a Nodemailer transporter using your Gmail credentials
+    // 2. Create a Nodemailer transporter using your custom domain email SMTP settings
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT || 587,
+      secure: false,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -78,17 +95,25 @@ export async function POST(request) {
       from: process.env.EMAIL_USER,
       to: email,
       subject: `Appointment Confirmation: ${appointmentDateEST} at ${appointmentTimeEST} EST`,
-      text: isReturningClient ? 
-        `Hello ${client},
+      text: isReturningClient
+        ? `Hello ${client},
 
 Your appointment has been confirmed for ${appointmentDateEST} at ${appointmentTimeEST} EST.
-Consultation Type: ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
-${consultationType === "in-person" ? `
+Consultation Type: ${
+            consultationType === "in-person"
+              ? "In-person visit"
+              : "Telehealth consultation"
+          }
+${
+  consultationType === "in-person"
+    ? `
 Location and Parking Information:
 Our office is located at: 100 S. Ashley Drive, Suite 600, Tampa, Florida 33602
 Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.
 
-Directions: https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602` : ""}
+Directions: https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602`
+    : ""
+}
 We look forward to meeting you soon!
 
 Add this appointment to your calendar:
@@ -98,17 +123,25 @@ Cancellation Policy:
 Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text: tel:2174172073
 
 Regards,
-Jason Versace` :
-        `Hello ${client},
+Jason Versace`
+        : `Hello ${client},
 
 Your appointment has been confirmed for ${appointmentDateEST} at ${appointmentTimeEST} EST.
-Consultation Type: ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
-${consultationType === "in-person" ? `
+Consultation Type: ${
+            consultationType === "in-person"
+              ? "In-person visit"
+              : "Telehealth consultation"
+          }
+${
+  consultationType === "in-person"
+    ? `
 Location and Parking Information:
 Our office is located at: 100 S. Ashley Drive, Suite 600, Tampa, Florida 33602
 Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.
 
-Directions: https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602` : ""}
+Directions: https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602`
+    : ""
+}
 We look forward to meeting you soon!
 
 As a new client, please review and complete the informed consent form attached to this email.
@@ -121,8 +154,8 @@ Please note that appointments may be cancelled up to 2 hours before the schedule
 
 Regards,
 Jason Versace`,
-      html: isReturningClient ?
-        `
+      html: isReturningClient
+        ? `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
           <p>Hello ${client},</p>
           
@@ -131,16 +164,24 @@ Jason Versace`,
             <p style="font-size: 18px; margin-bottom: 10px;">
               <strong>Date:</strong> ${appointmentDateEST}<br>
               <strong>Time:</strong> ${appointmentTimeEST} EST<br>
-              <strong>Consultation Type:</strong> ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
+              <strong>Consultation Type:</strong> ${
+                consultationType === "in-person"
+                  ? "In-person visit"
+                  : "Telehealth consultation"
+              }
             </p>
           </div>
 
-          ${consultationType === "in-person" ? `
+          ${
+            consultationType === "in-person"
+              ? `
           <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
             <h3 style="color: #1e40af; margin-top: 0;">Location and Parking Information</h3>
             <p>Our office is located at: <a href="https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602" style="color: #2563eb; text-decoration: underline;">100 S. Ashley Drive, Suite 600, Tampa, Florida 33602</a></p>
             <p>Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.</p>
-          </div>` : ""}
+          </div>`
+              : ""
+          }
 
           <p>We look forward to meeting you soon!</p>
 
@@ -157,8 +198,8 @@ Jason Versace`,
 
           <p>Regards,<br>Jason Versace</p>
         </div>
-      ` :
-        `
+      `
+        : `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
           <p>Hello ${client},</p>
           
@@ -167,16 +208,24 @@ Jason Versace`,
             <p style="font-size: 18px; margin-bottom: 10px;">
               <strong>Date:</strong> ${appointmentDateEST}<br>
               <strong>Time:</strong> ${appointmentTimeEST} EST<br>
-              <strong>Consultation Type:</strong> ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
+              <strong>Consultation Type:</strong> ${
+                consultationType === "in-person"
+                  ? "In-person visit"
+                  : "Telehealth consultation"
+              }
             </p>
           </div>
 
-          ${consultationType === "in-person" ? `
+          ${
+            consultationType === "in-person"
+              ? `
           <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
             <h3 style="color: #1e40af; margin-top: 0;">Location and Parking Information</h3>
             <p>Our office is located at: <a href="https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Florida+33602" style="color: #2563eb; text-decoration: underline;">100 S. Ashley Drive, Suite 600, Tampa, Florida 33602</a></p>
             <p>Parking is available on-site. Please arrive 5-10 minutes early to allow time for parking and check-in.</p>
-          </div>` : ""}
+          </div>`
+              : ""
+          }
 
           <p>We look forward to meeting you soon!</p>
           <p>As a new client, please review and complete the informed consent form attached to this email.</p>
@@ -195,12 +244,14 @@ Jason Versace`,
           <p>Regards,<br>Jason Versace</p>
         </div>
       `,
-      attachments: isReturningClient ? [] : [
-        {
-          filename: 'informed-consent-form.pdf',
-          path: './public/documents/informed-consent-form.pdf'
-        }
-      ]
+      attachments: isReturningClient
+        ? []
+        : [
+            {
+              filename: "informed-consent-form.pdf",
+              path: "./public/documents/informed-consent-form.pdf",
+            },
+          ],
     });
 
     // 4. Send notification email to therapist
@@ -215,7 +266,11 @@ Date: ${appointmentDateEST}
 Time: ${appointmentTimeEST} EST
 Email: ${email}
 Phone: ${phone}
-Consultation Type: ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
+Consultation Type: ${
+        consultationType === "in-person"
+          ? "In-person visit"
+          : "Telehealth consultation"
+      }
 
 Add this appointment to your calendar:
 Google Calendar: ${googleCalendarUrl}`,
@@ -230,7 +285,11 @@ Google Calendar: ${googleCalendarUrl}`,
               <strong>Time:</strong> ${appointmentTimeEST} EST<br>
               <strong>Email:</strong> ${email}<br>
               <strong>Phone:</strong> ${phone}<br>
-              <strong>Consultation Type:</strong> ${consultationType === "in-person" ? "In-person visit" : "Telehealth consultation"}
+              <strong>Consultation Type:</strong> ${
+                consultationType === "in-person"
+                  ? "In-person visit"
+                  : "Telehealth consultation"
+              }
             </p>
           </div>
 

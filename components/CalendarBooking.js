@@ -42,21 +42,21 @@ export default function CalendarBooking({ id }) {
   const getAvailableTimeSlotsForDate = (date) => {
     const dayOfWeek = date.getDay();
     const hours = businessHours[dayOfWeek];
-    
+
     if (!hours) return [];
 
     const slots = [];
     for (let hour = hours.start; hour < hours.end; hour++) {
-      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+      slots.push(`${hour.toString().padStart(2, "0")}:00`);
     }
     return slots;
   };
 
   // Function to format time for display (12-hour format)
   const formatTimeDisplay = (time) => {
-    const [hours, minutes] = time.split(':');
+    const [hours, minutes] = time.split(":");
     const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
   };
@@ -71,7 +71,9 @@ export default function CalendarBooking({ id }) {
     if (selectedDay) {
       const date = new Date(currentYear, currentMonth, selectedDay);
       const availableSlots = getAvailableTimeSlotsForDate(date);
-      setAvailableTimeSlots(availableSlots.filter(slot => !bookedTimeSlots.includes(slot)));
+      setAvailableTimeSlots(
+        availableSlots.filter((slot) => !bookedTimeSlots.includes(slot))
+      );
     }
   }, [selectedDay, bookedTimeSlots, currentYear, currentMonth]);
 
@@ -104,7 +106,15 @@ export default function CalendarBooking({ id }) {
   };
 
   const handleConfirm = async () => {
-    if (!selectedDay || !selectedTime || !name || !email || !phone || isReturningClient === null || consultationType === null) {
+    if (
+      !selectedDay ||
+      !selectedTime ||
+      !name ||
+      !email ||
+      !phone ||
+      isReturningClient === null ||
+      consultationType === null
+    ) {
       setMessage("All fields are required.");
       return;
     }
@@ -193,15 +203,15 @@ export default function CalendarBooking({ id }) {
   };
 
   return (
-    <div id={id} className="min-h-screen py-20 ">
-      <div className="flex flex-col md:flex-row max-w-5xl mx-4 lg:mx-auto my-32 border bg-white border-slate-200 rounded-md shadow-sm overflow-hidden">
+    <div id={id} className="min-h-screen py-20">
+      <div className="flex flex-col md:flex-row max-w-5xl mx-4 lg:mx-auto my-32 border bg-white border-gray-200 rounded-2xl overflow-hidden">
         {/* LEFT PANEL: Meeting Info & User Input */}
-        <div className="w-full md:w-1/2 p-10 bg-white shadow-lg rounded-xl">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+        <div className="w-full md:w-1/2 p-10 bg-white rounded-2xl">
+          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
             Meet Jason Versace
           </h1>
 
-          <p className="text-lg text-gray-600 mt-3 mb-6">
+          <p className="text-lg lg:text-xl text-gray-600 mt-3 mb-8 leading-relaxed">
             Schedule a meeting with Jason Versace to discuss your project, get
             advice, or just have a chat. Please fill in your details below to
             confirm your booking.
@@ -209,7 +219,9 @@ export default function CalendarBooking({ id }) {
 
           <div className="mt-6 space-y-6">
             <div className="mb-4">
-              <p className="text-lg text-gray-700 mb-2">Are you a returning client? *</p>
+              <p className="text-lg text-gray-700 mb-2">
+                Are you a returning client? *
+              </p>
               <div className="flex gap-6">
                 <label className="flex items-center text-lg">
                   <input
@@ -237,7 +249,10 @@ export default function CalendarBooking({ id }) {
             </div>
 
             <div className="mb-4">
-              <p className="text-lg text-gray-700 mb-2">Please select your preference: telehealth consultation or in-person visit. *</p>
+              <p className="text-lg text-gray-700 mb-2">
+                Please select your preference: telehealth consultation or
+                in-person visit. *
+              </p>
               <div className="flex gap-6">
                 <label className="flex items-center text-lg">
                   <input
@@ -293,7 +308,13 @@ export default function CalendarBooking({ id }) {
               {loading ? "Booking..." : "Confirm Booking"}
             </button>
             {message && (
-              <p className={`text-lg ${message.includes("success") ? "text-green-600" : "text-red-600"}`}>
+              <p
+                className={`text-lg ${
+                  message.includes("success")
+                    ? "text-green-600"
+                    : "text-red-600"
+                }`}
+              >
                 {message}
               </p>
             )}
@@ -339,7 +360,7 @@ export default function CalendarBooking({ id }) {
               const date = new Date(currentYear, currentMonth, day);
               const isValid = isValidBookingDate(date);
               const isPast = date < new Date().setHours(0, 0, 0, 0);
-              
+
               return (
                 <div
                   key={day}
