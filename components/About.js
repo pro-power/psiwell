@@ -27,7 +27,7 @@ export default function About({ id }) {
             
             <div className="space-y-6 text-gray-700 leading-relaxed text-lg">
               <p>
-                Jason Versace earned his Master's degree in Mental Health Counseling from Argosy University. 
+                Jason Versace earned his Master&rsquo;s degree in Mental Health Counseling from Argosy University. 
                 Following his graduate studies, he gained extensive experience as an addiction counselor and 
                 behavior specialist across various in-patient and out-patient settings.
               </p>

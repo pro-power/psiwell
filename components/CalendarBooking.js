@@ -722,7 +722,7 @@ export default function CalendarBooking({ id }) {
                           Appointment Booked!
                         </h3>
                         <p className="text-gray-600 mb-4">
-                          Your appointment has been successfully booked, but we couldn't send the confirmation email.
+                          Your appointment has been successfully booked, but we couldn&rsquo;t send the confirmation email.
                         </p>
                         <div className="text-sm text-gray-700 bg-yellow-50 p-4 rounded-lg">
                           <p className="font-medium mb-2">Please contact us directly:</p>
@@ -743,7 +743,7 @@ export default function CalendarBooking({ id }) {
                           Booking Failed
                         </h3>
                         <p className="text-gray-600 mb-4">
-                          We couldn't process your appointment booking. Please try again or contact us directly.
+                          We couldn&rsquo;t process your appointment booking. Please try again or contact us directly.
                         </p>
                         <div className="text-sm text-gray-700 bg-red-50 p-4 rounded-lg">
                           <p className="font-medium mb-2">Please contact us:</p>
@@ -781,7 +781,7 @@ export default function CalendarBooking({ id }) {
                       </div>
 
                       <div className="text-sm text-gray-600 bg-blue-50 p-4 rounded-lg mb-6">
-                        <p className="font-medium text-blue-900 mb-1">What's Next?</p>
+                        <p className="font-medium text-blue-900 mb-1">What&rsquo;s Next?</p>
                         <p>
                           {message === "success" ? 
                             `Check your email for confirmation details and calendar invite. ${consultationType === "in-person" ? 
