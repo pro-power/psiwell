@@ -19,12 +19,12 @@ export default function CalendarBooking({ id }) {
 
   // Business hours configuration
   const businessHours = {
-    1: { start: 9, end: 17 }, // Monday
+    1: null, // Monday
     2: { start: 9, end: 17 }, // Tuesday
     3: { start: 18, end: 22 }, // Wednesday
     4: { start: 9, end: 17 }, // Thursday
     5: { start: 9, end: 17 }, // Friday
-    6: null, // Saturday - closed
+    6: { start: 10, end: 16 }, // Saturday
     0: null, // Sunday - closed
   };
 
@@ -221,7 +221,7 @@ export default function CalendarBooking({ id }) {
       }
     } catch (error) {
       console.error("Booking error:", error);
-      setMessage("Failed to book appointment. Please try again or email us directly at jasonversace1969@gmail.com");
+      setMessage("Failed to book appointment. Please try again or email us directly at jason@psiwellnessinc.com");
     }
 
     setLoading(false);
@@ -437,9 +437,13 @@ export default function CalendarBooking({ id }) {
                 <div className="mt-8 p-4 bg-blue-50 rounded-xl border border-blue-200">
                   <h4 className="font-semibold text-blue-900 mb-2">Office Hours</h4>
                   <div className="text-sm text-blue-700 space-y-1">
-                    <div>Monday, Tuesday, Thursday, Friday: 9:00 AM - 5:00 PM</div>
+                    <div>Monday: Closed</div>
+                    <div>Tuesday: 9:00 AM - 5:30 PM</div>
                     <div>Wednesday: 6:00 PM - 10:00 PM</div>
-                    <div>Weekends: Closed</div>
+                    <div>Thursday: 9:00 PM - 5:30 PM</div>
+                    <div>Friday: 9:00 PM - 5:30 PM</div>
+                    <div>Saturday: 10:00 PM - 4:00 PM</div>
+                    <div>Sunday: Closed</div>
                   </div>
                 </div>
               </div>
@@ -736,8 +740,8 @@ export default function CalendarBooking({ id }) {
                         </p>
                         <div className="text-sm text-gray-700 bg-yellow-50 p-4 rounded-lg">
                           <p className="font-medium mb-2">Please contact us directly:</p>
-                          <p>Email: <a href="mailto:jasonversace1969@gmail.com" className="text-blue-600 hover:underline">jasonversace1969@gmail.com</a></p>
-                          <p>Phone: <a href="tel:2174172073" className="text-blue-600 hover:underline">(217) 417-2073</a></p>
+                          <p>Email: <a href="mailto:jason@psiwellnessinc.com" className="text-blue-600 hover:underline">jason@psiwellnessinc.com</a></p>
+                          <p>Phone: <a href="tel:8136474654" className="text-blue-600 hover:underline">(813) 647-4654</a></p>
                         </div>
                       </div>
                     </>
@@ -757,8 +761,8 @@ export default function CalendarBooking({ id }) {
                         </p>
                         <div className="text-sm text-gray-700 bg-red-50 p-4 rounded-lg">
                           <p className="font-medium mb-2">Please contact us:</p>
-                          <p>Email: <a href="mailto:jasonversace1969@gmail.com" className="text-blue-600 hover:underline">jasonversace1969@gmail.com</a></p>
-                          <p>Phone: <a href="tel:2174172073" className="text-blue-600 hover:underline">(217) 417-2073</a></p>
+                          <p>Email: <a href="mailto:jason@psiwellnessinc.com" className="text-blue-600 hover:underline">jason@psiwellnessinc.com</a></p>
+                          <p>Phone: <a href="tel:8136474654" className="text-blue-600 hover:underline">(813) 647-4654</a></p>
                         </div>
                       </div>
                     </>

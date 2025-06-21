@@ -14,8 +14,8 @@ export default function Footer({ id }) {
             <div className="space-y-3 text-gray-300 text-lg leading-relaxed">
               <p>100 S. Ashley Drive, Suite 600</p>
               <p>Tampa, FL 33602</p>
-              <p>Phone: (217) 417-2073</p>
-              <p>Email: jasonversace1969@gmail.com</p>
+              <p>Phone: (813) 647-4654</p>
+              <p>Email: jason@psiwellnessinc.com</p>
             </div>
           </div>
 
@@ -48,14 +48,19 @@ export default function Footer({ id }) {
           <div>
             <h3 className="font-bold text-xl mb-6 text-white">Office Hours</h3>
             <div className="space-y-3 text-gray-300 text-lg leading-relaxed">
-              <p>Monday &amp; Tuesday</p>
-              <p>9:00 AM – 5:00 PM</p>
-              <p>Wednesday</p>
-              <p>6:00 PM – 10:00 PM</p>
-              <p>Thursday &amp; Friday</p>
-              <p>9:00 AM – 5:00 PM</p>
-              <p>Saturday &amp; Sunday</p>
-              <p>Closed</p>
+                Monday: Closed
+                <br />
+                Tuesday: 9:00 AM – 5:30 PM
+                <br />
+                Wednesday: 6:00 PM – 10:00 PM
+                <br />
+                Thursday: 9:00 PM – 5:30 PM
+                <br />
+                Friday: 9:00 PM – 5:30 PM
+                <br />
+                Saturday: 10:00 PM – 4:00 PM
+                <br />
+                Sunday: Closed
             </div>
           </div>
         </div>

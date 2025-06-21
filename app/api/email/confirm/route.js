@@ -34,8 +34,30 @@ export async function POST(request) {
       .replace(/[-:]/g, "")
       .replace(/\.\d+/g, "");
 
-    // Create Google Calendar link
-    const eventDetails = {
+    // Create CLIENT Google Calendar link
+    const clientEventDetails = {
+      action: "TEMPLATE",
+      text: `Appointment with Jason Versace`,
+      dates: `${startTimeISO}/${endTimeISO}`,
+      details: `Appointment with Jason Versace\nConsultation Type: ${
+        consultationType === "in-person"
+          ? "In-person visit"
+          : "Telehealth consultation"
+      }\nPhone: (813) 647-4654`,
+      location:
+        consultationType === "in-person"
+          ? "100 S. Ashley Drive, Suite 600, Tampa, Florida 33602"
+          : "Telehealth",
+    };
+
+    const clientGoogleCalendarUrl = `https://calendar.google.com/calendar/render?${Object.entries(
+      clientEventDetails
+    )
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join("&")}`;
+
+    // Create THERAPIST Google Calendar link
+    const therapistEventDetails = {
       action: "TEMPLATE",
       text: `Appointment with ${client}`,
       dates: `${startTimeISO}/${endTimeISO}`,
@@ -43,15 +65,15 @@ export async function POST(request) {
         consultationType === "in-person"
           ? "In-person visit"
           : "Telehealth consultation"
-      }`,
+      }\nReturning Client: ${isReturningClient ? "Yes" : "No"}`,
       location:
         consultationType === "in-person"
           ? "100 S. Ashley Drive, Suite 600, Tampa, Florida 33602"
           : "Telehealth",
     };
 
-    const googleCalendarUrl = `https://calendar.google.com/calendar/render?${Object.entries(
-      eventDetails
+    const therapistGoogleCalendarUrl = `https://calendar.google.com/calendar/render?${Object.entries(
+      therapistEventDetails
     )
       .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
       .join("&")}`;
@@ -80,6 +102,14 @@ export async function POST(request) {
     const appointmentDateEST = formatDateEST(startTime);
 
     // 2. Create a Nodemailer transporter using your custom domain email SMTP settings
+    console.log('Environment variables check:', {
+      SMTP_HOST: process.env.SMTP_HOST ? 'Set' : 'Missing',
+      SMTP_PORT: process.env.SMTP_PORT || 'Using default 587',
+      EMAIL_USER: process.env.EMAIL_USER ? 'Set' : 'Missing',
+      EMAIL_PASS: process.env.EMAIL_PASS ? 'Set' : 'Missing',
+      THERAPIST_EMAIL: process.env.THERAPIST_EMAIL ? 'Set' : 'Missing'
+    });
+
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT || 587,
@@ -91,7 +121,10 @@ export async function POST(request) {
     });
 
     // 3. Send confirmation email to client
-    await transporter.sendMail({
+    console.log('Attempting to send client email to:', email);
+    
+    try {
+      await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
       subject: `Appointment Confirmation: ${appointmentDateEST} at ${appointmentTimeEST} EST`,
@@ -117,7 +150,7 @@ Directions: https://maps.google.com/?q=100+S.+Ashley+Drive,+Suite+600,+Tampa,+Fl
 We look forward to meeting you soon!
 
 Add this appointment to your calendar:
-Google Calendar: ${googleCalendarUrl}
+Google Calendar: ${clientGoogleCalendarUrl}
 
 Cancellation Policy:
 Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text: tel:2174172073
@@ -147,7 +180,7 @@ We look forward to meeting you soon!
 As a new client, please review and complete the informed consent form attached to this email.
 
 Add this appointment to your calendar:
-Google Calendar: ${googleCalendarUrl}
+Google Calendar: ${clientGoogleCalendarUrl}
 
 Cancellation Policy:
 Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text: tel:2174172073
@@ -186,7 +219,7 @@ Jason Versace`,
           <p>We look forward to meeting you soon!</p>
 
           <div style="margin: 20px 0;">
-            <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+            <a href="${clientGoogleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
               Add to Google Calendar
             </a>
           </div>
@@ -231,7 +264,7 @@ Jason Versace`,
           <p>As a new client, please review and complete the informed consent form attached to this email.</p>
 
           <div style="margin: 20px 0;">
-            <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+            <a href="${clientGoogleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
               Add to Google Calendar
             </a>
           </div>
@@ -253,9 +286,18 @@ Jason Versace`,
             },
           ],
     });
+    
+    console.log('Client email sent successfully');
+    } catch (clientEmailError) {
+      console.error('Error sending client email:', clientEmailError);
+      throw clientEmailError;
+    }
 
     // 4. Send notification email to therapist
-    await transporter.sendMail({
+    console.log('Attempting to send therapist email to:', process.env.THERAPIST_EMAIL);
+    
+    try {
+      await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: process.env.THERAPIST_EMAIL,
       subject: `New Appointment: ${client} on ${appointmentDateEST} at ${appointmentTimeEST} EST`,
@@ -271,9 +313,10 @@ Consultation Type: ${
           ? "In-person visit"
           : "Telehealth consultation"
       }
+Returning Client: ${isReturningClient ? "Yes" : "No"}
 
 Add this appointment to your calendar:
-Google Calendar: ${googleCalendarUrl}`,
+Google Calendar: ${therapistGoogleCalendarUrl}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
           <h2 style="color: #2563eb;">New Appointment Booked</h2>
@@ -289,18 +332,25 @@ Google Calendar: ${googleCalendarUrl}`,
                 consultationType === "in-person"
                   ? "In-person visit"
                   : "Telehealth consultation"
-              }
+              }<br>
+              <strong>Returning Client:</strong> ${isReturningClient ? "Yes" : "No"}
             </p>
           </div>
 
           <div style="margin: 20px 0;">
-            <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+            <a href="${therapistGoogleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
               Add to Google Calendar
             </a>
           </div>
         </div>
       `,
     });
+    
+    console.log('Therapist email sent successfully');
+    } catch (therapistEmailError) {
+      console.error('Error sending therapist email:', therapistEmailError);
+      throw therapistEmailError;
+    }
 
     // 5. Return a success response
     return NextResponse.json(
@@ -308,11 +358,20 @@ Google Calendar: ${googleCalendarUrl}`,
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("Full error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      code: error.code
+    });
 
     // 6. Return an error response
     return NextResponse.json(
-      { error: "Failed to send confirmation emails." },
+      { 
+        error: "Failed to send confirmation emails.", 
+        details: error.message,
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     );
   }
