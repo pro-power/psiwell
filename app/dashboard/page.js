@@ -61,13 +61,13 @@ export default function EnhancedDashboard() {
 
   // Business hours configuration
   const businessHours = {
-    0: null, // Monday
-    1: { start: 9, end: 17 }, // Tuesday
-    2: { start: 18, end: 22 }, // Wednesday
-    3: { start: 9, end: 17 }, // Thursday
-    4: { start: 9, end: 17 }, // Friday
-    5: { start: 10, end: 16 }, // Saturday
-    6: null, // Sunday - closed
+    0: null, // Sunday - closed
+    1: null, // Monday - closed
+    2: { start: '09:00', end: '17:30' }, // Tuesday 9:00 AM - 5:30 PM
+    3: { start: '18:00', end: '22:00' }, // Wednesday 6:00 PM - 10:00 PM
+    4: { start: '09:00', end: '17:30' }, // Thursday 9:00 AM - 5:30 PM
+    5: { start: '09:00', end: '17:30' }, // Friday 9:00 AM - 5:30 PM
+    6: { start: '10:00', end: '16:00' }, // Saturday 10:00 AM - 4:00 PM 
   };
 
 
@@ -97,28 +97,48 @@ export default function EnhancedDashboard() {
   };
 
   const getAvailableTimeSlotsForDate = (date) => {
-    const dayOfWeek = new Date(date).getDay();
+    // Parse date correctly to avoid timezone issues
+    const [year, month, day] = date.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day);
+    const dayOfWeek = localDate.getDay();
+    
     const hours = businessHours[dayOfWeek];
     
-    if (!hours) return [];
-
-    const slots = [];
-    const [startHour, startMinute] = hours.start.split(':').map(Number);
-    const [endHour, endMinute] = hours.end.split(':').map(Number);
-    
-    const startTotalMinutes = startHour * 60 + startMinute;
-    const endTotalMinutes = endHour * 60 + endMinute;
-    
-    for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += 60) {
-      const hour = Math.floor(minutes / 60);
-      const minute = minutes % 60;
-      const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      slots.push(timeSlot);
+    if (!hours || hours === null) {
+      return [];
     }
+  
+    const slots = [];
     
-    return slots;
+    try {
+      const [startHour, startMinute] = hours.start.split(':').map(Number);
+      const [endHour, endMinute] = hours.end.split(':').map(Number);
+      
+      const startTotalMinutes = startHour * 60 + startMinute;
+      const endTotalMinutes = endHour * 60 + endMinute;
+      
+      for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += 60) {
+        const hour = Math.floor(minutes / 60);
+        const minute = minutes % 60;
+        const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        slots.push(timeSlot);
+      }
+      
+      return slots;
+    } catch (error) {
+      console.error('Error generating time slots:', error);
+      return [];
+    }
   };
+  
 
+  const isValidBookingDate = (date) => {
+    const [year, month, day] = date.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day);
+    const dayOfWeek = localDate.getDay();
+    const hours = businessHours[dayOfWeek];
+    return hours !== null && hours !== undefined;
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
@@ -202,20 +222,15 @@ export default function EnhancedDashboard() {
     setStats(newStats);
   }, [events]); // Add events dependency
   
-  // Helper function to check if a date is a valid booking date
-  const isValidBookingDate = useCallback((date) => {
-    const dayOfWeek = new Date(date).getDay();
-    return businessHours[dayOfWeek] !== null;
-  }, []); // No dependencies needed
   
-
   const fetchAvailableTimeSlots = useCallback(async (selectedDate, excludeEventId = null) => {
     setLoadingTimeSlots(true);
   
     try {
-      // Check if the selected date is a valid business day
-      const dateObj = new Date(selectedDate);
-      const dayOfWeek = dateObj.getDay();
+      // Parse date correctly to avoid timezone issues
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const localDate = new Date(year, month - 1, day);
+      const dayOfWeek = localDate.getDay();
       const businessHoursForDay = businessHours[dayOfWeek];
       
       if (!businessHoursForDay) {
@@ -227,7 +242,7 @@ export default function EnhancedDashboard() {
       // Check if the date is in the past
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const selectedDateObj = new Date(selectedDate);
+      const selectedDateObj = new Date(year, month - 1, day);
       selectedDateObj.setHours(0, 0, 0, 0);
       
       if (selectedDateObj < today) {
@@ -236,8 +251,24 @@ export default function EnhancedDashboard() {
         return;
       }
   
-      // Get all possible time slots for that day
-      const allSlots = getAvailableTimeSlotsForDate(selectedDate);
+      // Get all possible time slots for that day (inline the logic to avoid circular deps)
+      const slots = [];
+      try {
+        const [startHour, startMinute] = businessHoursForDay.start.split(':').map(Number);
+        const [endHour, endMinute] = businessHoursForDay.end.split(':').map(Number);
+        
+        const startTotalMinutes = startHour * 60 + startMinute;
+        const endTotalMinutes = endHour * 60 + endMinute;
+        
+        for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += 60) {
+          const hour = Math.floor(minutes / 60);
+          const minute = minutes % 60;
+          const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          slots.push(timeSlot);
+        }
+      } catch (error) {
+        console.error('Error generating time slots:', error);
+      }
   
       // Fetch already booked slots for the date
       const response = await fetch("/api/fetch/timeslot", {
@@ -256,7 +287,7 @@ export default function EnhancedDashboard() {
       // Filter out booked times
       const normalize = (timeStr) => timeStr?.padStart(5, '0').trim();
   
-      const availableSlots = allSlots.filter(slot => {
+      const availableSlots = slots.filter(slot => {
         return !bookedSlots.some(booked => {
           if (excludeEventId && booked._id === excludeEventId) {
             return false;
@@ -273,7 +304,7 @@ export default function EnhancedDashboard() {
     }
   
     setLoadingTimeSlots(false);
-  }, []); // No dependencies needed for this function
+  }, []); // EMPTY dependency array - no dependencies that change
   
 
   // Statistics state
@@ -317,7 +348,13 @@ export default function EnhancedDashboard() {
   
   useEffect(() => {
     if (formData.date) {
-      if (!isValidBookingDate(formData.date)) {
+      // Check validity inline to avoid dependency issues
+      const [year, month, day] = formData.date.split('-').map(Number);
+      const localDate = new Date(year, month - 1, day);
+      const dayOfWeek = localDate.getDay();
+      const hours = businessHours[dayOfWeek];
+      
+      if (!hours || hours === null) {
         setAvailableTimeSlots([]);
         setFormData(prev => ({ ...prev, time: '' }));
         return;
@@ -329,7 +366,7 @@ export default function EnhancedDashboard() {
     } else {
       setAvailableTimeSlots([]);
     }
-  }, [formData.date, isEditModalOpen, selectedAppointment?._id, fetchAvailableTimeSlots, isValidBookingDate]);
+  }, [formData.date, isEditModalOpen, selectedAppointment?._id, fetchAvailableTimeSlots]);
 
   // Authentication handlers
   // Add this state for rate limiting

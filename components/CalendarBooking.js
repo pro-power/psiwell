@@ -45,19 +45,6 @@ export default function CalendarBooking({ id }) {
     return businessHours[dayOfWeek] !== null;
   };
 
-  const getAvailableTimeSlotsForDate = useCallback((date) => {
-    const dayOfWeek = new Date(date).getDay();
-    const hours = businessHours[dayOfWeek];
-  
-    if (!hours) return [];
-  
-    const slots = [];
-    for (let hour = hours.start; hour < hours.end; hour++) {
-      slots.push(`${hour.toString().padStart(2, "0")}:00`);
-    }
-    return slots;
-  }, []); // No dependencies needed
-
   const formatTimeDisplay = (time) => {
     const [hours, minutes] = time.split(":");
     const hour = parseInt(hours);
@@ -76,21 +63,20 @@ export default function CalendarBooking({ id }) {
     });
   };
 
-  useEffect(() => {
-    if (selectedDay) {
-      fetchBookedTimeSlots();
-    }
-  }, [selectedDay, fetchBookedTimeSlots]);
+  const getAvailableTimeSlotsForDate = useCallback((date) => {
+    const dayOfWeek = new Date(date).getDay();
+    const hours = businessHours[dayOfWeek];
   
-  useEffect(() => {
-    if (selectedDay) {
-      const date = new Date(currentYear, currentMonth, selectedDay);
-      const availableSlots = getAvailableTimeSlotsForDate(date);
-      setAvailableTimeSlots(
-        availableSlots.filter((slot) => !bookedTimeSlots.includes(slot))
-      );
+    if (!hours) return [];
+  
+    const slots = [];
+    for (let hour = hours.start; hour < hours.end; hour++) {
+      slots.push(`${hour.toString().padStart(2, "0")}:00`);
     }
-  }, [selectedDay, bookedTimeSlots, currentYear, currentMonth, getAvailableTimeSlotsForDate]);
+    return slots;
+  }, []); // No dependencies needed
+
+
 
   const fetchBookedTimeSlots = useCallback(async () => {
     try {
@@ -111,6 +97,22 @@ export default function CalendarBooking({ id }) {
       setBookedTimeSlots([]);
     }
   }, [selectedDay, currentYear, currentMonth]); // Add dependencies
+
+  useEffect(() => {
+    if (selectedDay) {
+      fetchBookedTimeSlots();
+    }
+  }, [selectedDay, fetchBookedTimeSlots]);
+  
+  useEffect(() => {
+    if (selectedDay) {
+      const date = new Date(currentYear, currentMonth, selectedDay);
+      const availableSlots = getAvailableTimeSlotsForDate(date);
+      setAvailableTimeSlots(
+        availableSlots.filter((slot) => !bookedTimeSlots.includes(slot))
+      );
+    }
+  }, [selectedDay, bookedTimeSlots, currentYear, currentMonth, getAvailableTimeSlotsForDate]);
 
   const handleDateSelect = (day) => {
     const date = new Date(currentYear, currentMonth, day);
