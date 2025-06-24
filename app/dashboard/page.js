@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import { 
   Calendar, Clock, User, Phone, Mail, MapPin, Video, Edit, Trash2, 
   Search, Filter, Plus, Download, Eye, LogOut, BarChart3, Users,
@@ -69,61 +70,176 @@ export default function EnhancedDashboard() {
     6: null, // Sunday - closed
   };
 
+
+  const parseLocalDate = (dateString) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const formatDate = (dateString) => {
+    return parseLocalDate(dateString).toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (timeString) => {
+    const [hours, minutes] = timeString.split(':');
+    const time = new Date();
+    time.setHours(parseInt(hours), parseInt(minutes));
+    return time.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
   const getAvailableTimeSlotsForDate = (date) => {
     const dayOfWeek = new Date(date).getDay();
     const hours = businessHours[dayOfWeek];
     
-    // Return empty array if business is closed that day
     if (!hours) return [];
-  
+
     const slots = [];
-    for (let hour = hours.start; hour < hours.end; hour++) {
-      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    const [startHour, startMinute] = hours.start.split(':').map(Number);
+    const [endHour, endMinute] = hours.end.split(':').map(Number);
+    
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+    
+    for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += 60) {
+      const hour = Math.floor(minutes / 60);
+      const minute = minutes % 60;
+      const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      slots.push(timeSlot);
     }
+    
     return slots;
   };
+
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_token_expiry');
+    setAuthToken(null);
+    setIsAuthenticated(false);
+    setEvents([]);
+    setSelectedItems(new Set());
+    setActiveTab('overview');
+    setCurrentPage(1);
+    setError('');
+  };
+
+
+  const fetchEvents = useCallback(async () => {
+    try {
+      const response = await fetch("/api/fetch/event", {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`
+        },
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setEvents(data.data || []);
+        setError("");
+      } else {
+        if (response.status === 401) {
+          setError("Session expired. Please log in again.");
+          handleLogout();
+          return;
+        }
+        setError("Failed to fetch events: " + (data.error || "Unknown error"));
+      }
+    } catch (error) {
+      setError("Something went wrong while fetching events");
+    } finally {
+      setLoading(false);
+    }
+  }, [authToken]); // Add authToken dependency
+
+  const calculateStats = useCallback(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const weekFromNow = new Date(today);
+    weekFromNow.setDate(weekFromNow.getDate() + 7);
+    
+    const monthFromNow = new Date(today);
+    monthFromNow.setMonth(monthFromNow.getMonth() + 1);
+
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const newStats = {
+      total: events.length,
+      upcoming: events.filter(e => new Date(e.date) >= today).length,
+      today: events.filter(e => new Date(e.date).toDateString() === today.toDateString()).length,
+      thisWeek: events.filter(e => {
+        const eventDate = parseLocalDate(e.date);
+        return eventDate >= today && eventDate < weekFromNow;
+      }).length,
+      thisMonth: events.filter(e => {
+        const eventDate = parseLocalDate(e.date);
+        return eventDate >= today && eventDate < monthFromNow;
+      }).length,
+      newClients: events.filter(e => !e.isReturningClient).length,
+      returningClients: events.filter(e => e.isReturningClient).length,
+      completedThisMonth: events.filter(e => {
+        const eventDate = parseLocalDate(e.date);
+        return eventDate >= startOfMonth && eventDate < today;
+      }).length,
+      revenue: events.length * 150,
+      averagePerDay: events.length > 0 ? (events.length / 30).toFixed(1) : 0
+    };
+
+    setStats(newStats);
+  }, [events]); // Add events dependency
   
   // Helper function to check if a date is a valid booking date
-  const isValidBookingDate = (date) => {
+  const isValidBookingDate = useCallback((date) => {
     const dayOfWeek = new Date(date).getDay();
     return businessHours[dayOfWeek] !== null;
-  };
+  }, []); // No dependencies needed
   
 
-  const fetchAvailableTimeSlots = async (selectedDate, excludeEventId = null) => {
+  const fetchAvailableTimeSlots = useCallback(async (selectedDate, excludeEventId = null) => {
     setLoadingTimeSlots(true);
   
     try {
-      // 1. Check if the selected date is a valid business day
+      // Check if the selected date is a valid business day
       const dateObj = new Date(selectedDate);
       const dayOfWeek = dateObj.getDay();
       const businessHoursForDay = businessHours[dayOfWeek];
       
       if (!businessHoursForDay) {
-        // Day is closed (Monday/Sunday)
         setAvailableTimeSlots([]);
         setLoadingTimeSlots(false);
         return;
       }
       
-      // 2. Check if the date is in the past
+      // Check if the date is in the past
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const selectedDateObj = new Date(selectedDate);
       selectedDateObj.setHours(0, 0, 0, 0);
       
       if (selectedDateObj < today) {
-        // Past date
         setAvailableTimeSlots([]);
         setLoadingTimeSlots(false);
         return;
       }
   
-      // 3. Get all possible time slots for that day (based on business hours)
+      // Get all possible time slots for that day
       const allSlots = getAvailableTimeSlotsForDate(selectedDate);
-      console.log('All possible slots for', selectedDate, ':', allSlots);
   
-      // 4. Fetch already booked slots for the date
+      // Fetch already booked slots for the date
       const response = await fetch("/api/fetch/timeslot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -136,37 +252,20 @@ export default function EnhancedDashboard() {
       if (response.ok && data.data) {
         bookedSlots = data.data;
       }
-      
-      console.log('Booked slots from API:', bookedSlots);
-      console.log('Exclude event ID:', excludeEventId);
   
-      // 5. Filter out booked times (excluding the current event if editing)
+      // Filter out booked times
       const normalize = (timeStr) => timeStr?.padStart(5, '0').trim();
   
       const availableSlots = allSlots.filter(slot => {
-        const isSlotBooked = bookedSlots.some(booked => {
-          // If we're editing, exclude the current event from the booked slots
+        return !bookedSlots.some(booked => {
           if (excludeEventId && booked._id === excludeEventId) {
-            console.log('Excluding event with ID:', booked._id);
             return false;
           }
-          // Handle both formats: booked.time or just booked if it's a string
           const bookedTime = typeof booked === 'string' ? booked : booked.time;
-          const isMatch = normalize(bookedTime) === normalize(slot);
-          if (isMatch) {
-            console.log('Slot', slot, 'is booked by:', bookedTime);
-          }
-          return isMatch;
+          return normalize(bookedTime) === normalize(slot);
         });
-        
-        if (!isSlotBooked) {
-          console.log('Slot', slot, 'is available');
-        }
-        
-        return !isSlotBooked;
       });
   
-      console.log('Final available slots:', availableSlots);
       setAvailableTimeSlots(availableSlots);
     } catch (error) {
       console.error("Error fetching time slots:", error);
@@ -174,7 +273,7 @@ export default function EnhancedDashboard() {
     }
   
     setLoadingTimeSlots(false);
-  };
+  }, []); // No dependencies needed for this function
   
 
   // Statistics state
@@ -210,15 +309,14 @@ export default function EnhancedDashboard() {
     if (isAuthenticated) {
       fetchEvents();
     }
-  }, [isAuthenticated]);
-
+  }, [isAuthenticated, fetchEvents]);
+  
   useEffect(() => {
     calculateStats();
-  }, [events]);
-
+  }, [events, calculateStats]);
+  
   useEffect(() => {
     if (formData.date) {
-      // Validate that the selected date is a valid business day
       if (!isValidBookingDate(formData.date)) {
         setAvailableTimeSlots([]);
         setFormData(prev => ({ ...prev, time: '' }));
@@ -231,7 +329,7 @@ export default function EnhancedDashboard() {
     } else {
       setAvailableTimeSlots([]);
     }
-  }, [formData.date, isEditModalOpen, selectedAppointment?._id]);
+  }, [formData.date, isEditModalOpen, selectedAppointment?._id, fetchAvailableTimeSlots, isValidBookingDate]);
 
   // Authentication handlers
   // Add this state for rate limiting
@@ -294,87 +392,7 @@ const handleLogin = async (e) => {
   }
 };
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_token_expiry');
-    setAuthToken(null);
-    setIsAuthenticated(false);
-    setEvents([]);
-    setSelectedItems(new Set());
-    setActiveTab('overview');
-    setCurrentPage(1);
-    setError('');
-  };
-
-  // Data fetching
-  const fetchEvents = async () => {
-    try {
-      const response = await fetch("/api/fetch/event", {
-        method: "GET",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`
-        },
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        setEvents(data.data || []);
-        setError("");
-      } else {
-        if (response.status === 401) {
-          setError("Session expired. Please log in again.");
-          handleLogout();
-          return;
-        }
-        setError("Failed to fetch events: " + (data.error || "Unknown error"));
-      }
-    } catch (error) {
-      setError("Something went wrong while fetching events");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateStats = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const weekFromNow = new Date(today);
-    weekFromNow.setDate(weekFromNow.getDate() + 7);
-    
-    const monthFromNow = new Date(today);
-    monthFromNow.setMonth(monthFromNow.getMonth() + 1);
-
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    const newStats = {
-      total: events.length,
-      upcoming: events.filter(e => new Date(e.date) >= today).length,
-      today: events.filter(e => new Date(e.date).toDateString() === today.toDateString()).length,
-      thisWeek: events.filter(e => {
-        const eventDate = parseLocalDate(e.date);
-        return eventDate >= today && eventDate < weekFromNow;
-      }).length,
-      thisMonth: events.filter(e => {
-        const eventDate = parseLocalDate(e.date);
-        return eventDate >= today && eventDate < monthFromNow;
-      }).length,
-      newClients: events.filter(e => !e.isReturningClient).length,
-      returningClients: events.filter(e => e.isReturningClient).length,
-      completedThisMonth: events.filter(e => {
-        const eventDate = parseLocalDate(e.date);
-        return eventDate >= startOfMonth && eventDate < today;
-      }).length,
-      revenue: events.length * 150,
-      averagePerDay: events.length > 0 ? (events.length / 30).toFixed(1) : 0
-    };
-
-    setStats(newStats);
-  };
+  
 
   // Event handlers
   const handleCancel = async (eventId) => {
@@ -655,31 +673,6 @@ const handleLogin = async (e) => {
     window.URL.revokeObjectURL(url);
   };
 
-  const parseLocalDate = (dateString) => {
-    const [year, month, day] = dateString.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  };
-
-  const formatDate = (dateString) => {
-    return parseLocalDate(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatTime = (timeString) => {
-    const [hours, minutes] = timeString.split(':');
-    const time = new Date();
-    time.setHours(parseInt(hours), parseInt(minutes));
-    return time.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
   const getAppointmentStatus = (date, time) => {
     const [hour, minute] = time.split(':').map(Number);
     const dateObj = parseLocalDate(date);
@@ -703,11 +696,14 @@ const handleLogin = async (e) => {
           {/* login screen logo section with this: */}
 <div className="text-center mb-8">
   <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-white shadow-md">
-    <img 
-      src="psiwell.png" 
-      alt="Psi Wellness Logo" 
-      className="w-15 h-15 object-contain"
-    />
+  <Image 
+    src="/psiwell.png" 
+    alt="Psi Wellness Logo" 
+    width={48}
+    height={48}
+    className="object-contain"
+    priority
+  />
   </div>
   <h1 className="text-2xl font-bold text-gray-900 mb-2">Psi Wellness Dashboard</h1>
   <p className="text-gray-600">Secure admin access for appointment management</p>
@@ -782,11 +778,14 @@ const handleLogin = async (e) => {
 <div className="flex items-center space-x-3">
   <div className="relative h-14 w-14">
     <div className="h-14 w-14 bg-white rounded-lg flex items-center justify-center shadow-sm border border-gray-200">
-      <img 
-        src="/psiwell.png" 
-        alt="Psi Wellness Logo" 
-        className="h-12 w-12 object-contain"
-      />
+    <Image 
+    src="/psiwell.png" 
+    alt="Psi Wellness Logo" 
+    width={48}
+    height={48}
+    className="object-contain"
+    priority
+  />
     </div>
   </div>
   <div>

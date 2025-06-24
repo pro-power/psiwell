@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export default function CalendarBooking({ id }) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -45,18 +45,18 @@ export default function CalendarBooking({ id }) {
     return businessHours[dayOfWeek] !== null;
   };
 
-  const getAvailableTimeSlotsForDate = (date) => {
-    const dayOfWeek = date.getDay();
+  const getAvailableTimeSlotsForDate = useCallback((date) => {
+    const dayOfWeek = new Date(date).getDay();
     const hours = businessHours[dayOfWeek];
-
+  
     if (!hours) return [];
-
+  
     const slots = [];
     for (let hour = hours.start; hour < hours.end; hour++) {
       slots.push(`${hour.toString().padStart(2, "0")}:00`);
     }
     return slots;
-  };
+  }, []); // No dependencies needed
 
   const formatTimeDisplay = (time) => {
     const [hours, minutes] = time.split(":");
@@ -80,8 +80,8 @@ export default function CalendarBooking({ id }) {
     if (selectedDay) {
       fetchBookedTimeSlots();
     }
-  }, [selectedDay]);
-
+  }, [selectedDay, fetchBookedTimeSlots]);
+  
   useEffect(() => {
     if (selectedDay) {
       const date = new Date(currentYear, currentMonth, selectedDay);
@@ -90,16 +90,16 @@ export default function CalendarBooking({ id }) {
         availableSlots.filter((slot) => !bookedTimeSlots.includes(slot))
       );
     }
-  }, [selectedDay, bookedTimeSlots, currentYear, currentMonth]);
+  }, [selectedDay, bookedTimeSlots, currentYear, currentMonth, getAvailableTimeSlotsForDate]);
 
-  const fetchBookedTimeSlots = async () => {
+  const fetchBookedTimeSlots = useCallback(async () => {
     try {
       const response = await fetch("/api/fetch/timeslot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: getFormattedDate(selectedDay) }),
       });
-
+  
       const data = await response.json();
       if (response.ok) {
         setBookedTimeSlots(data.data || []);
@@ -110,7 +110,7 @@ export default function CalendarBooking({ id }) {
       console.error("Error fetching booked time slots:", error);
       setBookedTimeSlots([]);
     }
-  };
+  }, [selectedDay, currentYear, currentMonth]); // Add dependencies
 
   const handleDateSelect = (day) => {
     const date = new Date(currentYear, currentMonth, day);

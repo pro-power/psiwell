@@ -9,9 +9,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const hideOnPaths = ['/admin', '/dashboard']; // Add all routes where navbar should be hidden
-  if (hideOnPaths.some(path => pathname.startsWith(path))) return null;
-
+  // IMPORTANT: Move all hooks BEFORE any conditional logic
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
@@ -20,6 +18,10 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // NOW we can do conditional rendering AFTER all hooks
+  const hideOnPaths = ['/admin', '/dashboard']; // Add all routes where navbar should be hidden
+  if (hideOnPaths.some(path => pathname.startsWith(path))) return null;
 
   const scrollToSection = (sectionId) => {
     const section = document.getElementById(sectionId);
