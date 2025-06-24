@@ -15,7 +15,7 @@ export default function Footer({ id }) {
               <p>100 S. Ashley Drive, Suite 600</p>
               <p>Tampa, FL 33602</p>
               <p>Phone: (813) 647-4654</p>
-              <p>Email: jason@psiwellnessinc.com</p>
+              <p>Email: psiwellness@hotmail.com</p>
             </div>
           </div>
 
@@ -54,11 +54,11 @@ export default function Footer({ id }) {
                 <br />
                 Wednesday: 6:00 PM – 10:00 PM
                 <br />
-                Thursday: 9:00 PM – 5:30 PM
+                Thursday: 9:00 AM – 5:30 PM
                 <br />
                 Friday: 9:00 PM – 5:30 PM
                 <br />
-                Saturday: 10:00 PM – 4:00 PM
+                Saturday: 10:00 AM – 4:00 PM
                 <br />
                 Sunday: Closed
             </div>

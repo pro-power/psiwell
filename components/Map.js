@@ -34,14 +34,15 @@ export default function Map({ id }) {
 
           <div className="text-gray-700 text-lg leading-relaxed mb-6">
             <span className="font-semibold text-gray-900">Business hours:</span>{" "}
-            <br />
-            Monday &amp; Tuesday: 9 AM–5 PM
-            <br />
-            Wednesday: 6 PM–10 PM
-            <br />
-            Thursday &amp; Friday: 9 AM–5 PM
-            <br />
-            Closed Saturday &amp; Sunday
+            <div className="text-sm text-grey-700 space-y-1">
+              <div>Monday: Closed</div>
+              <div>Tuesday: 9:00 AM - 5:30 PM</div>
+              <div>Wednesday: 6:00 PM - 10:00 PM</div>
+              <div>Thursday: 9:00 AM - 5:30 PM</div>
+              <div>Friday: 9:00 PM - 5:30 PM</div>
+              <div>Saturday: 10:00 AM - 4:00 PM</div>
+              <div>Sunday: Closed</div>
+            </div>
           </div>
 
           {/* Get Directions Button - Bottom Right */}

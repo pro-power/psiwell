@@ -9,6 +9,9 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  const hideOnPaths = ['/admin', '/dashboard']; // Add all routes where navbar should be hidden
+  if (hideOnPaths.some(path => pathname.startsWith(path))) return null;
+
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {

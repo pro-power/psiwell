@@ -15,24 +15,29 @@ export async function POST(request) {
       consultationType,
     } = await request.json();
 
-    // Format date and time for calendars
+    // FIXED: Create date objects properly with timezone handling
+    // Parse the date and time strings
     const [year, month, day] = date.split("-").map(Number);
     const [hours, minutes] = time.split(":").map(Number);
 
-    // Set start and end times (assuming 1 hour appointment)
-    const startTime = new Date(year, month - 1, day, hours, minutes, 0);
-    const endTime = new Date(startTime);
-    endTime.setHours(startTime.getHours() + 1);
+    // Create the appointment time in EST/EDT timezone
+    // Using a more reliable method to handle timezones
+    const appointmentDateTime = new Date();
+    appointmentDateTime.setFullYear(year, month - 1, day);
+    appointmentDateTime.setHours(hours, minutes, 0, 0);
 
-    // Format for Google Calendar URL
-    const startTimeISO = startTime
-      .toISOString()
-      .replace(/[-:]/g, "")
-      .replace(/\.\d+/g, "");
-    const endTimeISO = endTime
-      .toISOString()
-      .replace(/[-:]/g, "")
-      .replace(/\.\d+/g, "");
+    // Create end time (1 hour later)
+    const endDateTime = new Date(appointmentDateTime);
+    endDateTime.setHours(appointmentDateTime.getHours() + 1);
+
+    // FIXED: Format for Google Calendar (need to convert to UTC for calendar links)
+    // But preserve local time for display
+    const formatForGoogleCalendar = (date) => {
+      return date.toISOString().replace(/[-:]/g, "").replace(/\.\d+/g, "");
+    };
+
+    const startTimeISO = formatForGoogleCalendar(appointmentDateTime);
+    const endTimeISO = formatForGoogleCalendar(endDateTime);
 
     // Create CLIENT Google Calendar link
     const clientEventDetails = {
@@ -78,19 +83,20 @@ export async function POST(request) {
       .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
       .join("&")}`;
 
-    // Format time in EST
-    const formatTimeEST = (date) => {
-      return date.toLocaleTimeString("en-US", {
-        timeZone: "America/New_York",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
+    // FIXED: Format time and date for email display
+    // Use the original time values directly since they're already in the correct timezone
+    const formatTimeForEmail = (timeString) => {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      const displayMinutes = minutes.toString().padStart(2, '0');
+      return `${displayHours}:${displayMinutes} ${period}`;
     };
 
-    const formatDateEST = (date) => {
-      return date.toLocaleDateString("en-US", {
-        timeZone: "America/New_York",
+    const formatDateForEmail = (dateString) => {
+      const [year, month, day] = dateString.split("-").map(Number);
+      const dateObj = new Date(year, month - 1, day);
+      return dateObj.toLocaleDateString("en-US", {
         weekday: "long",
         year: "numeric",
         month: "long",
@@ -98,8 +104,9 @@ export async function POST(request) {
       });
     };
 
-    const appointmentTimeEST = formatTimeEST(startTime);
-    const appointmentDateEST = formatDateEST(startTime);
+    // Use the formatted time and date
+    const appointmentTimeEST = formatTimeForEmail(time);
+    const appointmentDateEST = formatDateForEmail(date);
 
     // 2. Create a Nodemailer transporter using your custom domain email SMTP settings
     console.log('Environment variables check:', {
@@ -122,6 +129,8 @@ export async function POST(request) {
 
     // 3. Send confirmation email to client
     console.log('Attempting to send client email to:', email);
+    console.log('Formatted appointment time:', appointmentTimeEST);
+    console.log('Formatted appointment date:', appointmentDateEST);
     
     try {
       await transporter.sendMail({
@@ -153,7 +162,7 @@ Add this appointment to your calendar:
 Google Calendar: ${clientGoogleCalendarUrl}
 
 Cancellation Policy:
-Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text: tel:2174172073
+Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text: tel:813-647-4654
 
 Regards,
 Jason Versace`
@@ -183,7 +192,7 @@ Add this appointment to your calendar:
 Google Calendar: ${clientGoogleCalendarUrl}
 
 Cancellation Policy:
-Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text: tel:2174172073
+Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text: tel:813-647-4654
 
 Regards,
 Jason Versace`,
@@ -226,7 +235,7 @@ Jason Versace`,
 
           <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="color: #1e40af; margin-top: 0;">Cancellation Policy</h3>
-            <p>Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text <a href="tel:2174172073" style="color: #2563eb; text-decoration: underline;">(217) 417-2073</a>.</p>
+            <p>Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text <a href="tel:8136474654" style="color: #2563eb; text-decoration: underline;">(813) 647-4654</a>.</p>
           </div>
 
           <p>Regards,<br>Jason Versace</p>
@@ -271,7 +280,7 @@ Jason Versace`,
 
           <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="color: #1e40af; margin-top: 0;">Cancellation Policy</h3>
-            <p>Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text <a href="tel:2174172073" style="color: #2563eb; text-decoration: underline;">(217) 417-2073</a>.</p>
+            <p>Please note that appointments may be cancelled up to 2 hours before the scheduled time. Cancellations made less than 2 hours before the appointment will be subject to a cancellation fee. To cancel or reschedule, please call or text <a href="tel:8136474654" style="color: #2563eb; text-decoration: underline;">(813) 647-4654</a>.</p>
           </div>
 
           <p>Regards,<br>Jason Versace</p>

@@ -20,10 +20,10 @@ export default function CalendarBooking({ id }) {
   // Business hours configuration
   const businessHours = {
     1: null, // Monday
-    2: { start: 9, end: 17 }, // Tuesday
-    3: { start: 18, end: 22 }, // Wednesday
-    4: { start: 9, end: 17 }, // Thursday
-    5: { start: 9, end: 17 }, // Friday
+    2: { start: 9, end: 17.5 }, // Tuesday (17.5 = 5:30 PM)
+    3: { start: 18, end: 23 }, // Wednesday
+    4: { start: 9, end: 17.5 }, // Thursday
+    5: { start: 9, end: 17.5 }, // Friday
     6: { start: 10, end: 16 }, // Saturday
     0: null, // Sunday - closed
   };
@@ -221,7 +221,7 @@ export default function CalendarBooking({ id }) {
       }
     } catch (error) {
       console.error("Booking error:", error);
-      setMessage("Failed to book appointment. Please try again or email us directly at jason@psiwellnessinc.com");
+      setMessage("Failed to book appointment. Please try again or email us directly at psiwellness@hotmail.com");
     }
 
     setLoading(false);
@@ -740,7 +740,7 @@ export default function CalendarBooking({ id }) {
                         </p>
                         <div className="text-sm text-gray-700 bg-yellow-50 p-4 rounded-lg">
                           <p className="font-medium mb-2">Please contact us directly:</p>
-                          <p>Email: <a href="mailto:jason@psiwellnessinc.com" className="text-blue-600 hover:underline">jason@psiwellnessinc.com</a></p>
+                          <p>Email: <a href="mailto:psiwellness@hotmail.com" className="text-blue-600 hover:underline">psiwellness@hotmail.com</a></p>
                           <p>Phone: <a href="tel:8136474654" className="text-blue-600 hover:underline">(813) 647-4654</a></p>
                         </div>
                       </div>
@@ -761,7 +761,7 @@ export default function CalendarBooking({ id }) {
                         </p>
                         <div className="text-sm text-gray-700 bg-red-50 p-4 rounded-lg">
                           <p className="font-medium mb-2">Please contact us:</p>
-                          <p>Email: <a href="mailto:jason@psiwellnessinc.com" className="text-blue-600 hover:underline">jason@psiwellnessinc.com</a></p>
+                          <p>Email: <a href="mailto:psiwellness@hotmail.com" className="text-blue-600 hover:underline">psiwellness@hotmail.com</a></p>
                           <p>Phone: <a href="tel:8136474654" className="text-blue-600 hover:underline">(813) 647-4654</a></p>
                         </div>
                       </div>
@@ -804,7 +804,7 @@ export default function CalendarBooking({ id }) {
                             }` :
                             `We have your appointment details. ${consultationType === "in-person" ? 
                               "Please arrive 5-10 minutes early for your in-person visit." : 
-                              "We'll provide telehealth connection details when you contact us."
+                              "We'll provide telehealth connection details when we contact you."
                             }`
                           }
                         </p>
