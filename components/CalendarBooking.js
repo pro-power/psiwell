@@ -443,8 +443,8 @@ export default function CalendarBooking({ id }) {
                     <div>Tuesday: 9:00 AM - 5:30 PM</div>
                     <div>Wednesday: 6:00 PM - 10:00 PM</div>
                     <div>Thursday: 9:00 PM - 5:30 PM</div>
-                    <div>Friday: 9:00 PM - 5:30 PM</div>
-                    <div>Saturday: 10:00 PM - 4:00 PM</div>
+                    <div>Friday: 9:00 AM - 5:30 PM</div>
+                    <div>Saturday: 10:00 AM - 4:00 PM</div>
                     <div>Sunday: Closed</div>
                   </div>
                 </div>

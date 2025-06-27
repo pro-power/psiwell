@@ -56,7 +56,7 @@ export default function Footer({ id }) {
                 <br />
                 Thursday: 9:00 AM – 5:30 PM
                 <br />
-                Friday: 9:00 PM – 5:30 PM
+                Friday: 9:00 AM – 5:30 PM
                 <br />
                 Saturday: 10:00 AM – 4:00 PM
                 <br />
